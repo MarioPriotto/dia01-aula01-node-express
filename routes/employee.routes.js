@@ -1,60 +1,88 @@
 import express, { response } from 'express'
-import { v4 as uuidv4 } from 'uuid'
-
+import EmployeeModel from '../models/employee.models.js'
 const router = express.Router()
 
-let data = [
-    // {   nome: "mario", 
-    //     departamento: "marketing", 
-    //     cidade: "Blumenau", 
-    //     idade: 52
-    // } 
-]
 
-router.get('/',(request, response) => {
-    // no json a gente a resposta que a gente quer obter
-    // sempre retornamos algo (uma resposta)
-    // quanto tiver um status 200 vai passar as informações de data
-    return response.status(200).json(data)
+// http://localhost:8080/employee
+// testando de NAVEGADOR
+// testando de POSTMAN (GET)
+
+router.get('/', async (request, response) => {
+    try {
+        const employees = await EmployeeModel.find()
+        return response.status(200).json(employees)        
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - / "})
+    }
 })
 
-// http://localhost:8080/create
-// testando de postman
-// no exemplo acima eu chamei POST, com conteúdo em BODY,raw,json
-router.post('/create',(request, response) => {
-    const newData = {
-        // captura o que estamos mandando (body da nossa requisição)
-        // inclui um id
-        ...request.body,
-        id: uuidv4()
+
+// http://localhost:8080/employee/id
+// testando de NAVEGADOR
+// testando de POSTMAN (GET)
+
+router.get('/:id', async (request,response) => {
+    try {
+        const { id } = request.params
+        const employee = await EmployeeModel.findById(id)
+        if (!employee) {
+            return response.status(404).json({ masg: "Usuário não foi encontrado"})
+        }
+        return response.status(200).json(employee)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - GET BY ID - /id "})
     }
-    data.push(newData)
-    return response.status(201).json(data)
+})
+
+
+// http://localhost:8080/employee/create
+// no POSTMAN chamar com POST -conteúdo no BODY, raw, json
+
+router.post('/create', async (request, response) => {
+    try {
+        const newEmployee = await EmployeeModel.create(request.body)
+        return response.status(201).json(newEmployee)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - /create "})
+    }
 }) 
 
-router.put('/edit/:id',(request,response) => {
-    const { id } = request.params
-    const update = data.find(
-        item => item.id === id
-    )
-    const index = data.indexOf(update)
-    data[index] = {
-        ...update, 
-        ...request.body
+
+// http://localhost:8080/employee/edit/id
+// no POSTMAN chamar com PUT -conteúdo no BODY, raw, json
+// remover, de body: _id, __v, createdAt, updatedAt
+
+router.put('/edit/:id', async (request,response) => {
+    try {
+        const { id } = request.params
+        const update = await EmployeeModel.findByIdAndUpdate(
+            id,
+            { ...request.body },
+            { new: true, runValidators: true}
+        )
+        return response.status(200).json(update)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - /edit/id "})
     }
-    return response.status(200).json(data[index])
 })
 
-router.delete('/delete/:id',(request, response) => {
-    const { id } = request.params
-    const deleteById = data.find(
-        item => item.id === id
-    )
-    if ( deleteById ) {
-        const index = data.indexOf(deleteById)
-        data.splice(index,1)
+
+// http://localhost:8080/employee/delete/id
+// no POSTMAN chamar com DELETE
+
+router.delete('/delete/:id',async (request, response) => {
+    try { 
+        const { id } = request.params
+        const deleteEmployee = await EmployeeModel.findByIdAndDelete(id)
+        return response.status(200).json(deleteEmployee)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - /delete/id "})
     }
-    return response.status(200).json(data)
 })
 
 export default router

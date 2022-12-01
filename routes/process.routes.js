@@ -1,99 +1,186 @@
 import express, { response } from 'express'
-import { v4 as uuidv4 } from 'uuid'
-
+import cadastroModel from '../models/cadastroBase.models.js'
 const router = express.Router()
 
-let data = [
-]
 
-router.get('/all',(request, response) => {
-    return response.status(200).json(data)
-})
+// http://localhost:8080/process/all
+// testando de NAVEGADOR
+// testando de POSTMAN (GET)
 
-router.get('/random',(request, response) => {
-    
-    const index = Math.floor(Math.random() * data.length) - 1
-    return response.status(200).json(data[index])
-})
-
-router.get('/:id',(request,response) => {
-    const { id } = request.params
-    const registro = data.find(
-        item => item.id === id
-    )
-    const index = data.indexOf(registro)
-    return response.status(200).json(data[index])
-})
-
-router.get('/setor/:id',(request,response) => {
-    const { id } = request.params
-    const registros = data.filter(
-        item => item.setor === id
-    )
-    //const index = data.indexOf(registro)
-    return response.status(200).json(registros)
-})
-
-router.get('/status/open',(request,response) => {
-    const registros = data.filter(
-        item => item.status !== 'Finalizado'
-    )
-    return response.status(200).json(registros)
-})
-
-router.get('/status/close',(request,response) => {
-    const registros = data.filter(
-        item => item.status === 'Finalizado'
-    )
-    return response.status(200).json(registros)
-})
-
-router.post('/create',(request, response) => {
-    const newData = {
-        ...request.body,
-        id: uuidv4()
+router.get('/all', async (request, response) => {
+    try {
+        const afetado = await cadastroModel.find()        
+        return response.status(200).json(afetado)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - base - / "})
     }
-    data.push(newData)
-    return response.status(200).json(data)
+})
+
+
+// http://localhost:8080/process/create
+// no POSTMAN chamar com POST -conteúdo no BODY, raw, json
+
+router.post('/create',async (request, response) => {
+    try {
+        const afetado = await cadastroModel.create(request.body)
+        return response.status(201).json(afetado)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - /create "})
+    }
 }) 
 
-router.put('/edit/:id',(request,response) => {
-    const { id } = request.params
-    const update = data.find(
-        item => item.id === id
-    )
-    const index = data.indexOf(update)
-    data[index] = {
-        ...update, 
-        ...request.body
+
+// http://localhost:8080/process/random
+// testando de NAVEGADOR
+// testando de POSTMAN (GET)
+
+router.get('/random',async (request, response) => {
+    try {
+        const count = await cadastroModel.estimatedDocumentCount();
+        const index = Math.floor(Math.random() * count )
+        //const afetado = await cadastroModel.find( {}, null, { skip: index, limit: 1 }).exec();
+        const afetado = await cadastroModel.findOne( {}, null, { skip: index });
+        return response.status(200).json(afetado)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - /random "})
     }
-    return response.status(200).json(data[index])
 })
 
-router.put('/addComment/:id',(request,response) => {
-    const { id } = request.params
-    const update = data.find(
-        item => item.id === id
-    )
-    const index = data.indexOf(update)
-    //data[index] = {
-        // ...update, 
-        //...request.body
-    //}
-    data[index].comments.push("comentário adicionado: " + (data[index].comments.length+1) )
-    return response.status(200).json(data[index])
+
+// http://localhost:8080/process/id
+// testando de NAVEGADOR
+// testando de POSTMAN (GET)
+
+router.get('/:id',async (request,response) => {
+    try {
+        const { id } = request.params
+        // retorna um objeto
+        const afetado = await cadastroModel.findOne({_id: id})
+        return response.status(200).json(afetado)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - /get/id "})
+    }
 })
 
-router.delete('/delete/:id',(request, response) => {
-    const { id } = request.params
-    const deleteById = data.find(
-        item => item.id === id
-    )
-    if ( deleteById ) {
-        const index = data.indexOf(deleteById)
-        data.splice(index,1)
+
+// http://localhost:8080/process/edit/id
+// no POSTMAN chamar com PUT -conteúdo no BODY, raw, json
+// remover, de body: _id, __v, createdAt, updatedAt
+
+router.put('/edit/:id', async (request,response) => {
+    try {
+        const { id } = request.params
+        const afetado = await cadastroModel.findByIdAndUpdate(
+            id,
+            { ...request.body },
+            { new: true, runValidators: true}
+        )
+        return response.status(200).json(afetado)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - /edit/id "})
     }
-    return response.status(200).json(data)
 })
+
+
+// http://localhost:8080/process/process/id
+// no POSTMAN chamar com DELETE
+
+router.delete('/delete/:id',async (request, response) => {
+    try { 
+        const { id } = request.params
+        const afetado = await cadastroModel.findByIdAndDelete(id)
+        return response.status(200).json(afetado)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - /delete/id "})
+    }
+})
+
+
+// http://localhost:8080/process/setor/id
+// testando de NAVEGADOR
+// testando de POSTMAN (GET)
+
+router.get('/setor/:id', async (request,response) => {
+    try {
+        const { id } = request.params
+        const query  = { setor: id };
+        const afetado = await cadastroModel.find(query)
+        if (!afetado) {
+            return response.status(404).json({ msg: "Setor não encontrado"})
+        }
+        return response.status(200).json(afetado)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - GET BY SETOR - /setor/id "})
+    }
+})
+
+
+// http://localhost:8080/process/status/open
+// testando de NAVEGADOR
+// testando de POSTMAN (GET)
+
+router.get('/status/open',async (request,response) => {
+    try {
+        const query  = { status: { $eq: 'Aberto' } }
+        const afetado = await cadastroModel.find(query)
+        if (!afetado) {
+            return response.status(404).json({ msg: "Não há Status Aberto"})
+        }
+        return response.status(200).json(afetado)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - GET STATUS OPEN - /status/open"})
+    }
+})
+
+
+// http://localhost:8080/process/status/close
+// testando de NAVEGADOR
+// testando de POSTMAN (GET)
+
+router.get('/status/close',async (request,response) => {
+    try {
+        const query  = { status: { $eq: 'Fechado' } }
+        const afetado = await cadastroModel.find(query)
+        if (!afetado) {
+            return response.status(404).json({ msg: "Não há Status Fechado"})
+        }
+        return response.status(200).json(afetado)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - GET STATUS CLOSE - /status/close"})
+    }
+})
+
+
+// http://localhost:8080/process/addComment/id
+// testando de NAVEGADOR
+// testando de POSTMAN (GET)
+
+router.put('/addComment/:id',async (request,response) => {
+    try {
+        const { id } = request.params
+         // Retorna um objeto (e não uma lista)
+        let leitura = await cadastroModel.findOne({_id: id})
+        leitura.comments.push(`Comentário adicionado: ${leitura.comments.length+1}`)
+        const afetado = await cadastroModel.findByIdAndUpdate(
+            id,
+            { ...leitura },
+            { new: true, runValidators: true}
+        )
+        return response.status(200).json(afetado)
+    } catch (error) {
+        console.log(error)
+        return response.status(500).json({ msg: "Algo de errado não está certo - /addComment/id "})
+    }
+})
+
 
 export default router
