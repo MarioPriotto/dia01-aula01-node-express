@@ -1,7 +1,8 @@
 import express, { response } from 'express'
 import * as dotenv from 'dotenv'
-import employeeRouter from "./routes/employee.routes.js"
-import processRouter from "./routes/process.routes.js"
+import funcionarioRouter from "./routes/funcionario.routes.js"
+import setorRouter from "./routes/setor.routes.js"
+import viagemRouter from "./routes/viagem.routes.js"
 import dbConnection from './config/db.config.js'
 
 //configuração padrão do dotenv
@@ -17,8 +18,9 @@ const app = express()
 app.use(express.json())
 
 // ajusta a rota (no navegador) para os routes.js
-app.use('/employee',employeeRouter)
-app.use('/process',processRouter)
+app.use('/funcionario',funcionarioRouter)
+app.use('/setor',setorRouter)
+app.use('/viagem',viagemRouter)
 
 // executar o servidor na porta 8080
 // sempre vem string -> é preciso converter para número

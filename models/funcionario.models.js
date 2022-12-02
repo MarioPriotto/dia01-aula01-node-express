@@ -1,6 +1,6 @@
 import { model, Schema } from "mongoose";
 
-const  cadastroBaseSchema = new Schema(
+const  FuncionarioSchema = new Schema(
     {
         name: {
             type: String,
@@ -40,8 +40,15 @@ const  cadastroBaseSchema = new Schema(
             ]
         },
         setor: {
-            type: String,
+            type: Schema.Types.ObjectId, 
+            ref: "Setor"
         },
+        viagens: [
+            {
+                type: Schema.Types.ObjectId, 
+                ref: "Viagem"
+            }
+        ],
         comments: [String],
     },
     {
@@ -50,8 +57,8 @@ const  cadastroBaseSchema = new Schema(
 )
 
 //                          *** tem que ser no singular
-const cadastroModel = model("Base", cadastroBaseSchema)
+const FuncionarioModel = model("Funcionario", FuncionarioSchema)
 //    quando rodar e fizer a conexão
 //    lá na collections, vai virar plural "Employees"
 
-export default cadastroModel
+export default FuncionarioModel
